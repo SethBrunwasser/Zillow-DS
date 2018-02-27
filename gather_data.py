@@ -6,7 +6,7 @@ import xmltodict
 import json
 
 
-API_KEY = 'X1-ZWz1g9kczky39n_2qbsp'
+API_KEY = ''
 
 address = '9239 N 63RD Dr, Glendale, AZ'
 zipcode = '85302'

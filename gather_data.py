@@ -6,7 +6,7 @@ from property import Property
 from anytree import Node, RenderTree
 
 
-API_KEY = 'X1-ZWz1g9kczky39n_2qbsp'
+API_KEY = ''
 
 address = '9239 N 63RD Dr, Glendale, AZ'
 zipcode = '85302'

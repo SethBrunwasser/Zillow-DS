@@ -39,25 +39,24 @@ first = Node(initialProperty.zpid)
 principal, comparables = initialProperty.searchComparables()
 
 # Creating Property objects from list of comparables
-compList = []
-oneDeeperCompList = []
-for comp in comparables:
-	compObj = Property(comp['zpid'], comp['links'], comp['address'], comp['zestimate'], comp['localRealEstate'], principal=principal)
-	compList.append(compObj)
-	two = Node(compObj.zpid, parent=first)
+levelCount = 0
+# {"Tree-Height": parentNode}
+NodeDict = {str(levelCount): first}
+def recurseSearch(parentNode, principal, comparables, limit):
+	''' Recursively creates a network of comparable real estate.
+		Height of the tree = limit. Number of leaf nodes = 5 ** (limit - 1)'''
+	print("Height Level: {}".format(limit))
+	if limit == 1:
+		return True
+	for comp in comparables:
+		compObj = Property(comp['zpid'], comp['links'], comp['address'], comp['zestimate'], comp['localRealEstate'], 
+						principal=principal)
+		tempParent = Node(compObj.zpid, parent=parentNode)
+		tempPrinciple, tempComparables = compObj.searchComparables()
+		recurseSearch(tempParent, tempPrinciple, tempComparables, limit-1)
 
-	principal2, comparables2 = compObj.searchComparables()
-	for comp in comparables2:
-		compObj2 = Property(comp['zpid'], comp['links'], comp['address'], comp['zestimate'], comp['localRealEstate'], principal=principal)
-		oneDeeperCompList.append(compObj2) 
-		Node(compObj2.zpid, parent=two)
 
-
-
+recurseSearch(first, principal, comparables, 4)
 
 print(RenderTree(first))
-
-zpids = [compObj.zpid for compObj in oneDeeperCompList]
-print(len(zpids))
-print(len(set(zpids)))
 

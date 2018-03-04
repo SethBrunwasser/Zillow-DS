@@ -1,9 +1,10 @@
-import sqlite3
 import requests
 import xmltodict
+import pickle
 
+from database import RealEstateDB
 from property import Property
-from anytree import Node, RenderTree
+from anytree import Node, RenderTree, PreOrderIter
 
 
 API_KEY = ''
@@ -42,21 +43,48 @@ principal, comparables = initialProperty.searchComparables()
 levelCount = 0
 # {"Tree-Height": parentNode}
 NodeDict = {str(levelCount): first}
-def recurseSearch(parentNode, principal, comparables, limit):
+def recurseSearch(parentNode, principal, comparables, limit, comparableCount):
 	''' Recursively creates a network of comparable real estate.
-		Height of the tree = limit. Number of leaf nodes = 5 ** (limit - 1)'''
+		Height of the tree = limit. Number of leaf nodes = comparableCount ** (limit - 1) '''
 	print("Height Level: {}".format(limit))
 	if limit == 1:
 		return True
-	for comp in comparables:
-		compObj = Property(comp['zpid'], comp['links'], comp['address'], comp['zestimate'], comp['localRealEstate'], 
-						principal=principal)
-		tempParent = Node(compObj.zpid, parent=parentNode)
-		tempPrinciple, tempComparables = compObj.searchComparables()
-		recurseSearch(tempParent, tempPrinciple, tempComparables, limit-1)
+	else:
+		for comp in comparables:
+			compObj = Property(comp['zpid'], comp['links'], comp['address'], comp['zestimate'], comp['localRealEstate'], 
+							principal=principal)
+			tempParent = Node(compObj.zpid, parent=parentNode)
+			tempPrinciple, tempComparables = compObj.searchComparables(comparableCount)
+
+			recurseSearch(tempParent, tempPrinciple, tempComparables, limit-1, comparableCount)
 
 
-recurseSearch(first, principal, comparables, 4)
+recurseSearch(first, principal, comparables, 4, 5)
 
 print(RenderTree(first))
 
+links = []
+
+def addChildren(parent):
+	if parent.children is None:
+		return True
+	else:
+		for child in parent.children:
+			if (parent.name, child.name) not in links:
+				links.append((parent.name, child.name))
+			addChildren(child)
+addChildren(first)
+
+
+db = RealEstateDB()
+
+for parent, child in links:
+	if not db.checkIfExistsZPID(parent):
+		db.insertZPID(parent)
+	if not db.checkIfExistsZPID(child):
+		db.insertZPID(child)
+	if not db.checkIfExistsTreeLink(parent, child):
+		db.insertTreeLink(parent, child)
+
+db.query_all_real_estate()
+db.query_all_tree_path()
